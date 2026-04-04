@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수변전 현황 대시보드 | 방재실 건물관리</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1525;
+    --bg3: #151c30;
+    --border: #1e2d4a;
+    --border2: #243350;
+    --accent: #00d4ff;
+    --accent2: #0094b3;
+    --green: #00e5a0;
+    --yellow: #ffd440;
+    --red: #ff4566;
+    --orange: #ff8c42;
+    --text: #c8d8f0;
+    --text2: #7890b0;
+    --text3: #4a6080;
+    --hv-color: #7b61ff;
+    --lv-color: #00c5ff;
+    --temp-color: #ff6b35;
+    --mof-color: #00e5a0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none; z-index: 0;
+  }
+  .container { position: relative; z-index: 1; max-width: 1440px; margin: 0 auto; padding: 0 20px 40px; }
+
+  /* ── HEADER ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 0 20px; border-bottom: 1px solid var(--border2);
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .header-icon {
+    width: 46px; height: 46px;
+    background: linear-gradient(135deg, #1a2540, #243360);
+    border: 1px solid var(--accent2); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+  }
+  .header-title h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .header-title p { font-size: 12px; color: var(--text2); font-family: 'IBM Plex Mono', monospace; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .date-badge {
+    background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px;
+    padding: 6px 14px; font-size: 12px; font-family: 'IBM Plex Mono', monospace; color: var(--accent);
+  }
+  .status-badge {
+    background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 6px; padding: 6px 12px; font-size: 12px; color: var(--green);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg2);
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.04);
+  }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+  .upload-title { font-size: 15px; color: var(--text); font-weight: 500; margin-bottom: 6px; }
+  .upload-sub { font-size: 12px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; }
+  .upload-sub span { color: var(--accent); }
+
+  /* ── FILE INFO BAR ── */
+  .file-info-bar {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 16px; margin-bottom: 20px;
+    display: none; align-items: center; gap: 16px; flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+  }
+  .file-info-bar.show { display: flex; }
+  .file-info-item { display: flex; align-items: center; gap: 6px; color: var(--text2); }
+  .file-info-item strong { color: var(--accent); }
+  .btn-reupload {
+    margin-left: auto;
+    background: transparent; border: 1px solid var(--border2);
+    border-radius: 5px; padding: 4px 10px;
+    color: var(--text2); font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-reupload:hover { border-color: var(--accent2); color: var(--accent); }
+
+  /* ── ERROR ── */
+  .error-banner {
+    background: rgba(255,69,102,0.08); border: 1px solid rgba(255,69,102,0.3);
+    border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;
+    color: var(--red); font-size: 13px; display: none; align-items: center; gap: 10px;
+  }
+  .error-banner.show { display: flex; }
+
+  /* ── DAY SELECTOR ── */
+  .day-selector-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+  .day-selector-label { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .day-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+  .day-btn {
+    width: 36px; height: 32px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 5px; color: var(--text2); font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .day-btn:hover { border-color: var(--accent2); color: var(--accent); background: rgba(0,212,255,0.05); }
+  .day-btn.active { background: rgba(0,212,255,0.12); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .day-btn.has-alert { border-color: rgba(255,69,102,0.5); }
+  .day-placeholder { font-size: 12px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; padding: 4px 0; }
+
+  /* ── SUMMARY CARDS ── */
+  .summary-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .summary-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: relative; overflow: hidden; }
+  .summary-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+  .summary-card.hv::before  { background: linear-gradient(90deg, var(--hv-color), transparent); }
+  .summary-card.lv::before  { background: linear-gradient(90deg, var(--lv-color), transparent); }
+  .summary-card.temp::before{ background: linear-gradient(90deg, var(--temp-color), transparent); }
+  .summary-card.mof::before { background: linear-gradient(90deg, var(--mof-color), transparent); }
+  .summary-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .summary-value { font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+  .summary-card.hv   .summary-value { color: var(--hv-color); }
+  .summary-card.lv   .summary-value { color: var(--lv-color); }
+  .summary-card.temp .summary-value { color: var(--temp-color); }
+  .summary-card.mof  .summary-value { color: var(--mof-color); }
+  .summary-sub { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .section-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text); text-transform: uppercase; letter-spacing: 1px; }
+  .section-sub { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; margin-left: auto; }
+
+  /* ── PANEL CARDS ── */
+  .hv-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+  .lv-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 20px; }
+  .panel-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .panel-name { font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; margin-bottom: 12px; }
+  .panel-main { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 10px; }
+  .panel-kw { font-size: 32px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+  .panel-unit { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+  .panel-meta { display: flex; gap: 12px; font-size: 11px; }
+  .meta-item { display: flex; align-items: center; gap: 5px; }
+  .meta-label { color: var(--text3); font-family: 'IBM Plex Mono', monospace; }
+  .meta-value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .pf-good { color: var(--green); }
+  .pf-warn { color: var(--yellow); }
+  .pf-bad  { color: var(--red); }
+  .load-bar-wrap { margin-top: 12px; }
+  .load-bar-bg   { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .load-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* ── TEMP CARDS ── */
+  .temp-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 12px; margin-bottom: 20px; }
+  .temp-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; position: relative; }
+  .temp-card.warning { border-color: rgba(255,69,102,0.5); background: rgba(255,69,102,0.05); }
+  .temp-card.warning::after { content:'⚠'; position:absolute; top:6px; right:8px; font-size:10px; color:var(--red); }
+  .temp-name     { font-size: 10px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; margin-bottom: 6px; text-transform: uppercase; }
+  .temp-capacity { font-size: 9px; color: var(--text3); margin-bottom: 8px; }
+  .temp-value    { font-size: 28px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; line-height: 1; }
+  .temp-unit     { font-size: 11px; color: var(--text2); }
+  .temp-gauge      { margin-top: 10px; height: 3px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .temp-gauge-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* ── CHARTS ── */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-card canvas { max-height: 200px; }
+  .chart-full { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .chart-full canvas { max-height: 200px; }
+
+  /* ── MOF ── */
+  .mof-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .mof-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px; }
+  .mof-section h4 { font-size: 12px; color: var(--text2); margin-bottom: 12px; font-family: 'IBM Plex Mono', monospace; }
+  .mof-stat { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .mof-stat:last-child { border-bottom: none; }
+  .mof-stat-label { color: var(--text2); }
+  .mof-stat-value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--mof-color); }
+
+  /* ── ALERTS ── */
+  .alerts-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+  .alert-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 13px; }
+  .alert-item:last-child { margin-bottom: 0; }
+  .alert-warn   { background: rgba(255,140,66,0.08); border: 1px solid rgba(255,140,66,0.2); color: var(--orange); }
+  .alert-danger { background: rgba(255,69,102,0.08); border: 1px solid rgba(255,69,102,0.2); color: var(--red); }
+  .alert-ok     { background: rgba(0,229,160,0.06);  border: 1px solid rgba(0,229,160,0.15); color: var(--green); }
+
+  /* ── HIDDEN ── */
+  .dashboard-body { display: none; }
+  .dashboard-body.show { display: block; }
+
+  footer { text-align: center; padding: 20px 0; font-size: 11px; color: var(--text3); font-family: 'IBM Plex Mono', monospace; border-top: 1px solid var(--border); margin-top: 10px; }
+
+  @media (max-width: 1024px) {
+    .summary-row { grid-template-columns: repeat(2,1fr); }
+    .hv-grid, .lv-grid { grid-template-columns: repeat(2,1fr); }
+    .temp-grid { grid-template-columns: repeat(3,1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .mof-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .temp-grid { grid-template-columns: repeat(2,1fr); }
+    .hv-grid, .lv-grid { grid-template-columns: 1fr; }
+    .summary-row { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="header-icon">⚡</div>
+      <div class="header-title">
+        <h1>수변전 현황 대시보드</h1>
+        <p>방재실 건물관리 · 수배전반 모니터링 시스템</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="date-badge" id="currentDateBadge">—</div>
+      <div class="status-badge" id="statusBadge">
+        <div class="status-dot"></div>
+        <span id="statusText">파일 대기 중</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ERROR BANNER -->
+  <div class="error-banner" id="errorBanner">
+    <span>⚠️</span><span id="errorMsg"></span>
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+    <span class="upload-icon">📂</span>
+    <div class="upload-title">수변전일지 엑셀 파일을 여기에 드래그하거나 클릭하여 선택</div>
+    <div class="upload-sub">
+      구글 드라이브에서 최신 파일 다운로드 후 업로드 ·
+      <span>수변전일지_YYYY-M월.xlsx</span>
+    </div>
+  </div>
+
+  <!-- FILE INFO BAR -->
+  <div class="file-info-bar" id="fileInfoBar">
+    <div class="file-info-item">📄 <strong id="infoFileName">—</strong></div>
+    <div class="file-info-item">📊 <strong id="infoSheets">—</strong>일치 데이터</div>
+    <div class="file-info-item">🕐 로드 시각: <strong id="infoLoadTime">—</strong></div>
+    <button class="btn-reupload" onclick="resetUpload()">🔄 다른 파일 열기</button>
+  </div>
+
+  <!-- DAY SELECTOR -->
+  <div class="day-selector-wrap">
+    <div class="day-selector-label" id="daySelectorLabel">날짜 선택</div>
+    <div class="day-grid" id="dayGrid">
+      <span class="day-placeholder">파일 업로드 후 날짜가 표시됩니다</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-row">
+    <div class="summary-card hv">
+      <div class="summary-label">HV 총 부하</div>
+      <div class="summary-value" id="sumHvKw">— kW</div>
+      <div class="summary-sub">HV-2 지산 + SHV-1 오피스텔 + HV-4 지산</div>
+    </div>
+    <div class="summary-card lv">
+      <div class="summary-label">LV 총 부하</div>
+      <div class="summary-value" id="sumLvKw">— kW</div>
+      <div class="summary-sub">LV 1~6반 합계</div>
+    </div>
+    <div class="summary-card temp">
+      <div class="summary-label">변압기 최고온도</div>
+      <div class="summary-value" id="sumMaxTemp">— °C</div>
+      <div class="summary-sub">경보기준 55°C</div>
+    </div>
+    <div class="summary-card mof">
+      <div class="summary-label">한전 일사용량</div>
+      <div class="summary-value" id="sumMofTotal">— MWh</div>
+      <div class="summary-sub" id="sumMofSub">지산 + 오피스텔 (kWh)</div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="alerts-card">
+    <div class="section-header">
+      <div class="section-dot" style="background:#ff4566"></div>
+      <span class="section-title">알람 / 이상 감지</span>
+    </div>
+    <div id="alertsContainer">
+      <div class="alert-item alert-ok"><span>📋</span> 파일 업로드 후 자동 분석됩니다</div>
+    </div>
+  </div>
+
+  <!-- HV반 -->
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--hv-color)"></div>
+    <span class="section-title">고압반 (HV) — 22.9 kV</span>
+    <span class="section-sub">정격: 지산 6250kVA · 오피스텔 1250kVA</span>
+  </div>
+  <div class="hv-grid" id="hvPanels">
+    <div class="panel-card" style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:28px">파일 업로드 후 표시됩니다</div>
+  </div>
+
+  <!-- LV반 -->
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--lv-color)"></div>
+    <span class="section-title">저압반 (LV) — 380V / 220V</span>
+    <span class="section-sub">6개 반</span>
+  </div>
+  <div class="lv-grid" id="lvPanels">
+    <div class="panel-card" style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:28px">파일 업로드 후 표시됩니다</div>
+  </div>
+
+  <!-- 변압기 온도 -->
+  <div class="section-header">
+    <div class="section-dot" style="background:var(--temp-color)"></div>
+    <span class="section-title">변압기 온도 모니터링</span>
+    <span class="section-sub">경보기준 55°C</span>
+  </div>
+  <div class="temp-grid" id="tempCards">
+    <div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:20px">파일 업로드 후 표시됩니다</div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="section-header" style="margin-bottom:14px">
+        <div class="section-dot" style="background:var(--hv-color)"></div>
+        <span class="section-title">HV 월간 부하 추이 (KW)</span>
+      </div>
+      <canvas id="chartHv"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="section-header" style="margin-bottom:14px">
+        <div class="section-dot" style="background:var(--temp-color)"></div>
+        <span class="section-title">변압기 온도 월간 추이 (°C)</span>
+      </div>
+      <canvas id="chartTemp"></canvas>
+    </div>
+  </div>
+  <div class="chart-full">
+    <div class="section-header" style="margin-bottom:14px">
+      <div class="section-dot" style="background:var(--lv-color)"></div>
+      <span class="section-title">LV반 월간 부하 추이 (KW)</span>
+    </div>
+    <canvas id="chartLv"></canvas>
+  </div>
+
+  <!-- MOF -->
+  <div class="mof-card">
+    <div class="section-header">
+      <div class="section-dot" style="background:var(--mof-color)"></div>
+      <span class="section-title">한전 MOF 검침 — 월간 현황</span>
+    </div>
+    <div class="mof-grid">
+      <div class="mof-section">
+        <h4>▸ 지산 (배율 4,800)</h4>
+        <div id="mofJisanStats"><div class="mof-stat"><span class="mof-stat-label" style="color:var(--text3)">파일 업로드 후 표시</span></div></div>
+      </div>
+      <div class="mof-section">
+        <h4>▸ 오피스텔 (배율 960)</h4>
+        <div id="mofOfficeStats"><div class="mof-stat"><span class="mof-stat-label" style="color:var(--text3)">파일 업로드 후 표시</span></div></div>
+      </div>
+    </div>
+    <div style="margin-top:16px"><canvas id="chartMof" style="max-height:160px"></canvas></div>
+  </div>
+
+  <footer>
+    방재실 건물관리 시스템 · 수변전 현황 대시보드 · h182tera.github.io<br>
+    <span style="color:var(--text3);margin-top:4px;display:block">구글 드라이브에서 파일 다운로드 후 업로드 · API 불필요</span>
+  </footer>
+</div>
+
+<script>
+// ── 패널 설정 ────────────────────────────────────────
+const HV_PANELS = [
+  { key:'hv2',  name:'HV-2 지산측 MAIN', sub:'6,250 kVA', maxKw:5000, color:'#7b61ff' },
+  { key:'shv1', name:'SHV-1 오피스텔',   sub:'1,250 kVA', maxKw:1000, color:'#a78bff' },
+  { key:'hv4',  name:'HV-4 지산',        sub:'—',         maxKw:5000, color:'#9b5de5' },
+];
+const LV_PANELS = [
+  { key:'lv1', name:'LV 1-1', sub:'지산',      maxKw:300, color:'#00c5ff' },
+  { key:'lv2', name:'LV 2-1', sub:'지산',      maxKw:300, color:'#00b8f0' },
+  { key:'lv3', name:'LV 3-1', sub:'오피스텔',  maxKw:300, color:'#00a8e0' },
+  { key:'lv4', name:'LV 4-1', sub:'근생·공용', maxKw:300, color:'#0098d0' },
+  { key:'lv5', name:'LV 5-1', sub:'동력·공용', maxKw:300, color:'#0088c0' },
+  { key:'lv6', name:'LV 6-1', sub:'동력·공용', maxKw:300, color:'#0078b0' },
+];
+const TEMP_INFO = [
+  { key:'t1', name:'T1 지산',     cap:'1,500 kVA' },
+  { key:'t2', name:'T2 지산',     cap:'1,500 kVA' },
+  { key:'t3', name:'T3 오피스텔', cap:'1,250 kVA' },
+  { key:'t4', name:'T4 근생공용', cap:'1,000 kVA' },
+  { key:'t5', name:'T5 동력공용', cap:'1,000 kVA' },
+  { key:'t6', name:'T6 동력공용', cap:'1,250 kVA' },
+];
+
+let RAW_DATA = [];
+let selectedDay = null;
+let chartHv, chartTemp, chartLv, chartMof;
+
+// ── 드래그 앤 드롭 ───────────────────────────────────
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+// ── 파일 처리 ────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    showError(true, '엑셀 파일(.xlsx)만 업로드 가능합니다.');
+    return;
+  }
+  showError(false);
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      RAW_DATA = parseWorkbook(wb);
+      if (RAW_DATA.length === 0) throw new Error('데이터를 찾을 수 없습니다. 파일 형식을 확인해주세요.');
+
+      // 파일명에서 연월 추출
+      const match = file.name.match(/(\d{4})[.\-_]?(\d{1,2})/);
+      const yearMonth = match
+        ? `${match[1]}-${String(match[2]).padStart(2,'0')}`
+        : file.name.replace(/\.xlsx?$/i,'');
+
+      // 파일 정보 표시
+      document.getElementById('infoFileName').textContent = file.name;
+      document.getElementById('infoSheets').textContent   = RAW_DATA.length;
+      document.getElementById('infoLoadTime').textContent = new Date().toLocaleTimeString('ko-KR');
+      document.getElementById('fileInfoBar').classList.add('show');
+      document.getElementById('uploadZone').style.display = 'none';
+      document.getElementById('statusText').textContent   = '정상 운전 중';
+      document.getElementById('daySelectorLabel').textContent = `날짜 선택 — ${yearMonth}`;
+
+      selectedDay = RAW_DATA[RAW_DATA.length - 1].day;
+      document.getElementById('currentDateBadge').textContent =
+        `${yearMonth}-${String(selectedDay).padStart(2,'0')}`;
+
+      buildDayGrid(yearMonth);
+      buildCharts();
+      renderDay();
+
+    } catch(err) {
+      showError(true, err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── 워크북 파싱 ──────────────────────────────────────
+function parseWorkbook(wb) {
+  const results = [];
+  wb.SheetNames.forEach(name => {
+    if (name === '0' || name === '') return;
+    const dayMatch = name.match(/^(\d+)일?$/);
+    if (!dayMatch) return;
+    const day = parseInt(dayMatch[1]);
+    const ws  = wb.Sheets[name];
+    const arr = XLSX.utils.sheet_to_json(ws, { header:1, defval:null });
+
+    const safe = (r, c) => {
+      const v = arr[r]?.[c];
+      if (v === null || v === undefined || v === '') return null;
+      const n = parseFloat(v);
+      return isNaN(n) ? null : Math.round(n * 100) / 100;
+    };
+
+    const mofJ = safe(33, 10);
+    const mofO = safe(36, 10);
+
+    results.push({
+      day,
+      hv2_kw:  safe(6,7),   hv2_pf:  safe(6,8),
+      shv1_kw: safe(6,15),  shv1_pf: safe(6,16),
+      hv4_kw:  safe(10,7),  hv4_pf:  safe(10,8),
+      lv1_kw:  safe(15,7),  lv1_pf:  safe(15,8),
+      lv2_kw:  safe(15,15), lv2_pf:  safe(15,16),
+      lv3_kw:  safe(19,7),  lv3_pf:  safe(19,8),
+      lv4_kw:  safe(19,15), lv4_pf:  safe(19,16),
+      lv5_kw:  safe(23,7),  lv5_pf:  safe(23,8),
+      lv6_kw:  safe(23,15), lv6_pf:  safe(23,16),
+      t1: safe(26,1), t2: safe(26,3),
+      t3: safe(26,5), t4: safe(26,7),
+      t5: safe(26,9), t6: safe(26,11),
+      mof_jisan:  (mofJ && mofJ < 50000) ? Math.round(mofJ) : null,
+      mof_office: (mofO && mofO < 50000) ? Math.round(mofO) : null,
+    });
+  });
+  return results.sort((a,b) => a.day - b.day);
+}
+
+// ── 리셋 ─────────────────────────────────────────────
+function resetUpload() {
+  document.getElementById('uploadZone').style.display = '';
+  document.getElementById('fileInfoBar').classList.remove('show');
+  document.getElementById('fileInput').value = '';
+  document.getElementById('dayGrid').innerHTML = '<span class="day-placeholder">파일 업로드 후 날짜가 표시됩니다</span>';
+  document.getElementById('daySelectorLabel').textContent = '날짜 선택';
+  document.getElementById('currentDateBadge').textContent = '—';
+  document.getElementById('statusText').textContent = '파일 대기 중';
+  RAW_DATA = []; selectedDay = null;
+  ['sumHvKw','sumLvKw','sumMaxTemp','sumMofTotal'].forEach(id => {
+    document.getElementById(id).textContent = '— ';
+  });
+  document.getElementById('alertsContainer').innerHTML =
+    '<div class="alert-item alert-ok"><span>📋</span> 파일 업로드 후 자동 분석됩니다</div>';
+  ['hvPanels','lvPanels'].forEach(id => {
+    document.getElementById(id).innerHTML =
+      `<div class="panel-card" style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:28px">파일 업로드 후 표시됩니다</div>`;
+  });
+  document.getElementById('tempCards').innerHTML =
+    `<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:12px;font-family:'IBM Plex Mono',monospace;padding:20px">파일 업로드 후 표시됩니다</div>`;
+  if (chartHv)   { chartHv.destroy();   chartHv   = null; }
+  if (chartTemp) { chartTemp.destroy(); chartTemp = null; }
+  if (chartLv)   { chartLv.destroy();   chartLv   = null; }
+  if (chartMof)  { chartMof.destroy();  chartMof  = null; }
+}
+
+// ── 날짜 선택기 ──────────────────────────────────────
+function buildDayGrid(yearMonth) {
+  const grid = document.getElementById('dayGrid');
+  grid.innerHTML = '';
+
+  const alertDays = new Set();
+  RAW_DATA.forEach(d => {
+    const temps = [d.t1,d.t2,d.t3,d.t4,d.t5,d.t6].filter(Boolean);
+    if (temps.some(t => t >= 50)) alertDays.add(d.day);
+    const pfs = [d.hv2_pf,d.shv1_pf,d.hv4_pf,d.lv1_pf,d.lv2_pf,d.lv3_pf,d.lv4_pf,d.lv5_pf,d.lv6_pf].filter(Boolean);
+    if (pfs.some(p => p < 0.85)) alertDays.add(d.day);
+  });
+
+  RAW_DATA.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'day-btn'
+      + (d.day === selectedDay ? ' active' : '')
+      + (alertDays.has(d.day) ? ' has-alert' : '');
+    btn.textContent = d.day;
+    btn.title = alertDays.has(d.day) ? '⚠ 이상 감지된 날짜' : `${yearMonth}-${String(d.day).padStart(2,'0')}`;
+    btn.onclick = () => {
+      selectedDay = d.day;
+      document.getElementById('currentDateBadge').textContent =
+        `${yearMonth}-${String(d.day).padStart(2,'0')}`;
+      document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderDay();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+// ── 일별 렌더링 ──────────────────────────────────────
+function renderDay() {
+  const d = RAW_DATA.find(r => r.day === selectedDay);
+  if (!d) return;
+
+  const hvTotal  = (d.hv2_kw||0)+(d.shv1_kw||0)+(d.hv4_kw||0);
+  const lvTotal  = (d.lv1_kw||0)+(d.lv2_kw||0)+(d.lv3_kw||0)+(d.lv4_kw||0)+(d.lv5_kw||0)+(d.lv6_kw||0);
+  const temps    = [d.t1,d.t2,d.t3,d.t4,d.t5,d.t6].filter(Boolean);
+  const maxTemp  = temps.length ? Math.max(...temps) : 0;
+  const mofTotal = (d.mof_jisan||0)+(d.mof_office||0);
+
+  document.getElementById('sumHvKw').textContent    = Math.round(hvTotal) + ' kW';
+  document.getElementById('sumLvKw').textContent    = Math.round(lvTotal) + ' kW';
+  document.getElementById('sumMaxTemp').textContent = maxTemp.toFixed(1) + ' °C';
+  document.getElementById('sumMaxTemp').style.color =
+    maxTemp >= 55 ? 'var(--red)' : maxTemp >= 50 ? 'var(--orange)' : 'var(--temp-color)';
+  document.getElementById('sumMofTotal').textContent = (mofTotal/1000).toFixed(1) + ' MWh';
+  document.getElementById('sumMofSub').textContent   =
+    `지산 ${d.mof_jisan?d.mof_jisan.toLocaleString():'—'} + 오피스텔 ${d.mof_office?d.mof_office.toLocaleString():'—'} kWh`;
+
+  renderAlerts(d);
+  renderPanels('hvPanels', HV_PANELS, d);
+  renderPanels('lvPanels', LV_PANELS, d);
+  renderTempCards(d);
+}
+
+function pfClass(pf) {
+  if (!pf) return '';
+  return pf >= 0.95 ? 'pf-good' : pf >= 0.85 ? 'pf-warn' : 'pf-bad';
+}
+function tempColor(t) {
+  if (!t) return '#4a6080';
+  if (t >= 55) return '#ff4566';
+  if (t >= 50) return '#ff8c42';
+  if (t >= 45) return '#ffd440';
+  return '#00e5a0';
+}
+
+function renderPanels(id, panels, d) {
+  document.getElementById(id).innerHTML = panels.map(p => {
+    const kw  = d[p.key+'_kw'];
+    const pf  = d[p.key+'_pf'];
+    const pct = kw ? Math.min((kw/p.maxKw)*100, 100) : 0;
+    const barColor = pct > 80 ? '#ff4566' : pct > 60 ? '#ffd440' : p.color;
+    return `
+      <div class="panel-card">
+        <div class="panel-name">${p.name} <span style="color:var(--text3);font-size:10px">${p.sub}</span></div>
+        <div class="panel-main">
+          <span class="panel-kw" style="color:${p.color}">${kw!=null?kw.toFixed(0):'—'}</span>
+          <span class="panel-unit">kW</span>
+        </div>
+        <div class="panel-meta">
+          <div class="meta-item">
+            <span class="meta-label">PF</span>
+            <span class="meta-value ${pfClass(pf)}">${pf?pf.toFixed(2):'—'}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">부하율</span>
+            <span class="meta-value" style="color:${barColor}">${pct.toFixed(1)}%</span>
+          </div>
+        </div>
+        <div class="load-bar-wrap">
+          <div class="load-bar-bg">
+            <div class="load-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTempCards(d) {
+  document.getElementById('tempCards').innerHTML = TEMP_INFO.map(t => {
+    const val  = d[t.key];
+    const color = tempColor(val);
+    const pct   = Math.min(((val||0)/60)*100, 100);
+    return `
+      <div class="temp-card ${val>=55?'warning':''}">
+        <div class="temp-name">${t.name}</div>
+        <div class="temp-capacity">${t.cap}</div>
+        <div class="temp-value" style="color:${color}">${val!=null?val.toFixed(1):'—'}</div>
+        <div class="temp-unit">°C</div>
+        <div class="temp-gauge">
+          <div class="temp-gauge-fill" style="width:${pct}%;background:${color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderAlerts(d) {
+  const alerts = [];
+  TEMP_INFO.forEach(t => {
+    const v = d[t.key];
+    if (v >= 55) alerts.push({ type:'danger', msg:`🌡️ ${t.name} 온도 ${v}°C — 경보 초과 (기준 55°C)` });
+    else if (v >= 50) alerts.push({ type:'warn', msg:`🌡️ ${t.name} 온도 ${v}°C — 주의 (경보기준 근접)` });
+  });
+  [...HV_PANELS,...LV_PANELS].forEach(p => {
+    const pf = d[p.key+'_pf'];
+    if (pf && pf < 0.85) alerts.push({ type:'warn', msg:`⚡ ${p.name} 역률 ${pf.toFixed(2)} — 낮은 역률 주의` });
+  });
+  document.getElementById('alertsContainer').innerHTML = alerts.length === 0
+    ? '<div class="alert-item alert-ok"><span>✅</span> 전 설비 정상 운전 중 — 이상 없음</div>'
+    : alerts.map(a=>`<div class="alert-item alert-${a.type}"><span>${a.type==='danger'?'🚨':'⚠️'}</span> ${a.msg}</div>`).join('');
+}
+
+// ── 차트 ────────────────────────────────────────────
+function buildCharts() {
+  const days = RAW_DATA.map(d => d.day);
+  const tick = { color:'#4a6080', font:{ family:'IBM Plex Mono', size:10 } };
+  const defaults = {
+    responsive: true,
+    plugins: { legend: { labels: { color:'#7890b0', font:{ family:'IBM Plex Mono', size:11 } } } },
+    scales: {
+      x: { grid:{ color:'#1e2d4a' }, ticks: tick },
+      y: { grid:{ color:'#1e2d4a' }, ticks: tick }
+    }
+  };
+
+  if (chartHv) chartHv.destroy();
+  chartHv = new Chart(document.getElementById('chartHv'), {
+    type: 'line',
+    data: { labels: days, datasets: [
+      { label:'HV-2 지산 MAIN', data:RAW_DATA.map(d=>d.hv2_kw),  borderColor:'#7b61ff', backgroundColor:'rgba(123,97,255,0.08)', tension:0.3, borderWidth:2, pointRadius:2 },
+      { label:'SHV-1 오피스텔', data:RAW_DATA.map(d=>d.shv1_kw), borderColor:'#a78bff', backgroundColor:'rgba(167,139,255,0.08)', tension:0.3, borderWidth:2, pointRadius:2 },
+      { label:'HV-4 지산',      data:RAW_DATA.map(d=>d.hv4_kw),  borderColor:'#9b5de5', backgroundColor:'rgba(155,93,229,0.08)', tension:0.3, borderWidth:2, pointRadius:2 },
+    ]},
+    options: defaults
+  });
+
+  if (chartTemp) chartTemp.destroy();
+  chartTemp = new Chart(document.getElementById('chartTemp'), {
+    type: 'line',
+    data: { labels: days, datasets: [
+      ...TEMP_INFO.map((t,i)=>({
+        label: t.name, data: RAW_DATA.map(d=>d[t.key]),
+        borderColor:['#ff6b35','#ff8c42','#ffb347','#ffd440','#00e5a0','#00c5ff'][i],
+        tension:0.3, borderWidth:2, pointRadius:2, fill:false
+      })),
+      { label:'경보 55°C', data:days.map(()=>55), borderColor:'rgba(255,69,102,0.6)', borderDash:[5,5], borderWidth:1.5, pointRadius:0, fill:false }
+    ]},
+    options: defaults
+  });
+
+  if (chartLv) chartLv.destroy();
+  chartLv = new Chart(document.getElementById('chartLv'), {
+    type: 'bar',
+    data: { labels: days, datasets: LV_PANELS.map((p,i)=>({
+      label: `${p.name} ${p.sub}`,
+      data: RAW_DATA.map(d=>d[p.key+'_kw']),
+      backgroundColor:['rgba(0,197,255,0.7)','rgba(0,184,240,0.7)','rgba(0,168,224,0.7)','rgba(0,152,208,0.7)','rgba(0,136,192,0.7)','rgba(0,120,176,0.7)'][i],
+      borderWidth:0
+    }))},
+    options: { ...defaults, scales: { x:{...defaults.scales.x, stacked:true}, y:{...defaults.scales.y, stacked:true} } }
+  });
+
+  if (chartMof) chartMof.destroy();
+  chartMof = new Chart(document.getElementById('chartMof'), {
+    type: 'bar',
+    data: { labels: days, datasets: [
+      { label:'지산 일사용량',     data:RAW_DATA.map(d=>d.mof_jisan),  backgroundColor:'rgba(0,229,160,0.65)', borderWidth:0 },
+      { label:'오피스텔 일사용량', data:RAW_DATA.map(d=>d.mof_office), backgroundColor:'rgba(0,229,160,0.3)',  borderWidth:0 },
+    ]},
+    options: defaults
+  });
+
+  // MOF 통계
+  const mofStats = (vals, elId) => {
+    const valid = vals.filter(Boolean);
+    if (!valid.length) { document.getElementById(elId).innerHTML = '<div class="mof-stat"><span class="mof-stat-label" style="color:var(--text3)">데이터 없음</span></div>'; return; }
+    const total = valid.reduce((a,b)=>a+b,0);
+    document.getElementById(elId).innerHTML = `
+      <div class="mof-stat"><span class="mof-stat-label">월 합계</span><span class="mof-stat-value">${Math.round(total).toLocaleString()} kWh</span></div>
+      <div class="mof-stat"><span class="mof-stat-label">일 평균</span><span class="mof-stat-value">${Math.round(total/valid.length).toLocaleString()} kWh</span></div>
+      <div class="mof-stat"><span class="mof-stat-label">최대 일사용량</span><span class="mof-stat-value">${Math.round(Math.max(...valid)).toLocaleString()} kWh</span></div>`;
+  };
+  mofStats(RAW_DATA.map(d=>d.mof_jisan),  'mofJisanStats');
+  mofStats(RAW_DATA.map(d=>d.mof_office), 'mofOfficeStats');
+}
+
+function showError(show, msg='') {
+  const el = document.getElementById('errorBanner');
+  el.classList.toggle('show', show);
+  if (msg) document.getElementById('errorMsg').textContent = msg;
+}
+</script>
+</body>
+</html>
