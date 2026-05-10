@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>냉동기 모니터링 시스템 v4.0 (자동화 완성)</title>
+<title>냉동기 모니터링 시스템 v4.1 (UI/모바일 최적화)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -32,24 +32,27 @@
 
   .main{position:relative;z-index:1;padding:20px 24px;max-width:1400px;margin:0 auto;}
 
-  .upload-bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-  .up-area{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;}
-  .file-btn{padding:8px 18px;background:linear-gradient(135deg,#003a5c,#0066aa);border:1px solid var(--accent2);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .upload-bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .up-area{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  
+  .file-btn{padding:7px 16px;background:linear-gradient(135deg,#003a5c,#0066aa);border:1px solid var(--accent2);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
   .file-btn:hover{background:linear-gradient(135deg,#004a6c,#0088cc);box-shadow:var(--glow);}
   
-  .mode-toggle{display:flex;background:var(--bg2);border-radius:20px;padding:2px;border:1px solid var(--border);margin-right:10px;}
-  .m-btn{padding:5px 15px;border-radius:18px;font-size:11px;border:none;background:none;color:var(--text3);cursor:pointer;transition:all .2s;}
+  .mode-toggle{display:flex;background:var(--bg2);border-radius:20px;padding:2px;border:1px solid var(--border);}
+  .m-btn{width:60px; padding:5px 0; border-radius:18px; font-size:11px; border:none; background:none; color:var(--text3); cursor:pointer; transition:all .2s; text-align:center;}
   .m-btn.active{background:var(--accent);color:var(--bg);font-weight:700;}
 
-  .date-nav{display:flex;align-items:center;gap:8px;margin-left:auto;}
-  #date-disp{font-family:'Orbitron',monospace;font-size:13px;color:var(--accent);min-width:100px;text-align:center;}
+  .date-nav{display:flex;align-items:center;gap:12px;}
+  /* 날짜 폰트 기본 폰트로 변경 */
+  #date-disp{font-family:'Noto Sans KR',sans-serif; font-size:14px; font-weight:700; color:var(--text); min-width:90px; text-align:center;}
 
   .cpanel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px;}
   .cpanel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
   .cpanel-title{font-size:15px;color:var(--text);font-weight:700;text-shadow:var(--glow);}
   
-  .cwrap{position:relative;height:715px;}
-  .cwrap-full{position:relative;height:600px;}
+  /* 그래프 높이 약 4/5로 축소 */
+  .cwrap{position:relative;height:550px;} 
+  .cwrap-full{position:relative;height:480px;}
 
   .legend-bar{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
   .leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);cursor:pointer;user-select:none;transition:opacity 0.2s;}
@@ -71,10 +74,9 @@
   .tab-view.active{display:block;}
   footer{text-align:center;padding:16px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);margin-top:20px;}
 
-  /* 로딩 애니메이션 */
-  .loading-area { display:none; align-items:center; gap:8px; color:var(--accent); font-size:12px; font-weight:700; margin-left:10px; }
+  .loading-area { display:none; align-items:center; gap:6px; color:var(--accent); font-size:11px; font-weight:700;}
   .loading-area.show { display:flex; }
-  .spinner { width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
+  .spinner { width:14px; height:14px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg); } }
 
   @media(max-width:700px){
@@ -82,11 +84,14 @@
     .main{padding:12px;}
     .tab-nav { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; padding: 0 12px;}
     .tab-btn { padding: 14px 16px; font-size: 13px; }
-    .upload-bar { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px;}
-    .up-area { flex-direction: column; align-items: stretch; }
-    .file-btn { padding: 12px; font-size: 14px; text-align: center; }
-    .date-nav { justify-content: space-between; width: 100%; margin-top: 8px;}
-    .cwrap, .cwrap-full { height: 400px; }
+    
+    /* 모바일에서 상단 컨트롤 바 레이아웃 최적화 */
+    .upload-bar { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px;}
+    .up-area { justify-content: space-between; width: 100%; }
+    .date-nav { justify-content: space-between; width: 100%; margin-top: 4px;}
+    
+    /* 모바일 그래프 높이 축소 */
+    .cwrap, .cwrap-full { height: 320px; }
   }
 </style>
 </head>
@@ -110,21 +115,19 @@
 
 <div class="main">
   <div class="upload-bar">
-    <div class="mode-toggle">
-      <button class="m-btn active" id="mode-daily" onclick="setMode('daily')">일간</button>
-      <button class="m-btn" id="mode-3days" onclick="setMode('3days')">3일간</button>
-    </div>
-    
     <div class="up-area">
+      <div class="mode-toggle">
+        <button class="m-btn active" id="mode-daily" onclick="setMode('daily')">일간</button>
+        <button class="m-btn" id="mode-3days" onclick="setMode('3days')">3일간</button>
+      </div>
       <button class="file-btn" style="background:linear-gradient(135deg,#00665c,#009688); border-color:#00bfa5;" onclick="loadDriveData()">🔄 데이터 동기화</button>
-      <div id="file-chips" style="font-size:11px; color:var(--text3);">구글 드라이브와 연결됨 (최근 7일)</div>
-      <div class="loading-area" id="loading-area"><div class="spinner"></div>데이터 수신 중...</div>
+      <div class="loading-area" id="loading-area"><div class="spinner"></div>수신중...</div>
     </div>
 
     <div class="date-nav">
-      <button onclick="changeDate(-1)" class="file-btn" style="padding:5px 10px;" id="prev-btn" disabled>◀</button>
-      <span id="date-disp">데이터 대기중</span>
-      <button onclick="changeDate(1)" class="file-btn" style="padding:5px 10px;" id="next-btn" disabled>▶</button>
+      <button onclick="changeDate(-1)" class="file-btn" style="padding:6px 12px;" id="prev-btn" disabled>◀</button>
+      <span id="date-disp">대기중</span>
+      <button onclick="changeDate(1)" class="file-btn" style="padding:6px 12px;" id="next-btn" disabled>▶</button>
     </div>
   </div>
 
@@ -140,10 +143,10 @@
   </div>
 </div>
 
-<footer>현대 테라타워 향동 방재실 · 냉동기 대시보드 v4.0 (자동화 연동 완료)</footer>
+<footer>현대 테라타워 향동 방재실 · 냉동기 대시보드 v4.1</footer>
 
 <script>
-// ★★★ 여기에 복사해두신 '웹 앱 URL' 주소를 꼭 붙여넣으세요! ★★★
+// 웹 앱 URL 주소
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzdBN404KXgQnMbiJyr3DUyXUiXaDxd3vCkL6HDpFLjHtYpQTQEwbx3Oped1U3XJ0Qv/exec";
 
 const CHILLERS = ['냉동기#근생','냉동기#오피스텔','냉동기#지산고','냉동기#지산저'];
@@ -171,18 +174,15 @@ function setMode(mode){
   renderAll();
 }
 
-// ★ 대망의 자동 데이터 불러오기 함수
 async function loadDriveData() {
-
   document.getElementById('loading-area').classList.add('show');
   
   try {
     const response = await fetch(GAS_URL);
     const files = await response.json();
     
-    allData = {}; // 기존 데이터 초기화
+    allData = {}; 
 
-    // 파일 하나씩 압축 풀어서 파싱 (기존 로직 동일)
     for (let f of files) {
       const binaryStr = atob(f.data);
       const wb = XLSX.read(binaryStr, {type: 'binary'});
@@ -225,13 +225,12 @@ async function loadDriveData() {
 
   } catch(error) {
     console.error(error);
-    alert("데이터를 가져오는 데 실패했습니다. 구글 앱스 스크립트 배포 설정을 다시 확인해주세요.");
+    alert("데이터를 가져오는 데 실패했습니다.");
   } finally {
     document.getElementById('loading-area').classList.remove('show');
   }
 }
 
-// ★ 대시보드를 켜면 자동으로 데이터를 불러옵니다.
 window.onload = loadDriveData;
 
 function renderAll(){
@@ -258,7 +257,24 @@ function getChartOptions() {
     interaction: { mode: 'nearest', intersect: true }, 
     scales: {
       y: { min: 0, max: 100, ticks: { color: '#7aadcc' }, grid: { color: 'rgba(26,58,92,0.3)' } },
-      x: { ticks: { color: '#7aadcc', maxTicksLimit: viewMode==='daily'?12:20 }, grid: { display: false } }
+      x: { 
+        ticks: { 
+          color: '#7aadcc', 
+          autoSkip: false, // 임의로 건너뛰지 않도록 강제 제어
+          maxRotation: 0,
+          callback: function(val, index) {
+            const label = this.getLabelForValue(val);
+            // X축 시간: 일간 모드일 때 3시간 간격으로 출력 (0, 3, 6 ...)
+            if (viewMode === 'daily') {
+              return index % 3 === 0 ? label : '';
+            } else {
+              // 3일간 모드일 때는 6시간 간격으로 출력
+              return index % 6 === 0 ? label : ''; 
+            }
+          }
+        }, 
+        grid: { display: false } 
+      }
     },
     plugins: { 
       legend: { display: false },
@@ -301,9 +317,10 @@ function renderTopCharts(type){
   const labels = [];
   const datasets = [];
 
+  // 선 두께 1.5/1.0, 포인트 크기 1.5/1.0 으로 대폭 축소
   SH.forEach((c, i) => {
-    datasets.push({ label: c + ' 공급', data: [], borderColor: C4[i], borderWidth: 2.5, tension: 0.3, pointRadius: viewMode==='daily'?3:0 });
-    datasets.push({ label: c + ' 환수', data: [], borderColor: C4_DARK[i], borderDash: [5, 4], borderWidth: 2, tension: 0.3, pointRadius: viewMode==='daily'?2:0 });
+    datasets.push({ label: c + ' 공급', data: [], borderColor: C4[i], borderWidth: 1.5, tension: 0.3, pointRadius: viewMode==='daily'?1.5:0 });
+    datasets.push({ label: c + ' 환수', data: [], borderColor: C4_DARK[i], borderDash: [5, 4], borderWidth: 1.0, tension: 0.3, pointRadius: viewMode==='daily'?1:0 });
   });
 
   if(viewMode === 'daily'){
@@ -351,15 +368,16 @@ function renderBottomChart(dev){
   if(!allData[curDate]) return;
 
   const labels = [];
-  const pRad = viewMode==='daily'?3:0;
-  const pRad_d = viewMode==='daily'?2:0;
+  // 선 두께 1.5/1.0, 포인트 크기 1.5/1.0 으로 대폭 축소
+  const pRad = viewMode==='daily'?1.5:0;
+  const pRad_d = viewMode==='daily'?1:0;
 
-  const ds_jung_sup = { label: '중온수 공급', data: [], borderColor: '#ff7a4a', borderWidth: 2.5, tension: 0.3, pointRadius: pRad };
-  const ds_jung_ret = { label: '중온수 환수', data: [], borderColor: '#a64d2e', borderDash: [5, 4], borderWidth: 2, tension: 0.3, pointRadius: pRad_d };
-  const ds_cool_sup = { label: '냉각수 공급', data: [], borderColor: '#b2ff59', borderWidth: 2.5, tension: 0.3, pointRadius: pRad };
-  const ds_cool_ret = { label: '냉각수 환수', data: [], borderColor: '#7cb342', borderDash: [5, 4], borderWidth: 2, tension: 0.3, pointRadius: pRad_d };
-  const ds_cold_sup = { label: '냉수 공급', data: [], borderColor: '#00e5ff', borderWidth: 2.5, tension: 0.3, pointRadius: pRad };
-  const ds_cold_ret = { label: '냉수 환수', data: [], borderColor: '#008291', borderDash: [5, 4], borderWidth: 2, tension: 0.3, pointRadius: pRad_d };
+  const ds_jung_sup = { label: '중온수 공급', data: [], borderColor: '#ff7a4a', borderWidth: 1.5, tension: 0.3, pointRadius: pRad };
+  const ds_jung_ret = { label: '중온수 환수', data: [], borderColor: '#a64d2e', borderDash: [5, 4], borderWidth: 1.0, tension: 0.3, pointRadius: pRad_d };
+  const ds_cool_sup = { label: '냉각수 공급', data: [], borderColor: '#b2ff59', borderWidth: 1.5, tension: 0.3, pointRadius: pRad };
+  const ds_cool_ret = { label: '냉각수 환수', data: [], borderColor: '#7cb342', borderDash: [5, 4], borderWidth: 1.0, tension: 0.3, pointRadius: pRad_d };
+  const ds_cold_sup = { label: '냉수 공급', data: [], borderColor: '#00e5ff', borderWidth: 1.5, tension: 0.3, pointRadius: pRad };
+  const ds_cold_ret = { label: '냉수 환수', data: [], borderColor: '#008291', borderDash: [5, 4], borderWidth: 1.0, tension: 0.3, pointRadius: pRad_d };
 
   if(viewMode === 'daily'){
     labels.push(...allData[curDate].hours);
