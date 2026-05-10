@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>냉동기 모니터링 시스템 v4.4 (최종 완성본)</title>
+<title>냉동기 모니터링 시스템 v4.5 (모바일 최적화 완결)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -141,7 +141,7 @@
 <footer>현대 테라타워 향동 방재실 · 냉동기 대시보드 최종본</footer>
 
 <script>
-// ★ 형님의 웹 앱 주소 (건드리지 않으셔도 됩니다)
+// ★ 형님의 웹 앱 주소
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzdBN404KXgQnMbiJyr3DUyXUiXaDxd3vCkL6HDpFLjHtYpQTQEwbx3Oped1U3XJ0Qv/exec";
 
 const CHILLERS = ['냉동기#근생','냉동기#오피스텔','냉동기#지산고','냉동기#지산저'];
@@ -252,7 +252,8 @@ function getChartOptions() {
             if (viewMode === 'daily') {
               return index % 3 === 0 ? label : '';
             } else {
-              return index % 6 === 0 ? label : ''; 
+              // 3일간 모드일 때는 12시간 간격으로만 표시
+              return index % 12 === 0 ? label : ''; 
             }
           }
         }, 
@@ -262,14 +263,18 @@ function getChartOptions() {
           color: function(context) {
             if (context.tick && context.tick.value !== undefined) {
               const label = context.scale.getLabelForValue(context.tick.value);
-              // ★ 00:00 일 경우 무조건 선 지우기
+              // 00:00 일 경우 무조건 선 지우기 (이전 규칙 유지)
               if (label && label.includes('00:00')) return 'transparent';
             }
-            // ★ 수직선 색상 0.7 -> 0.25 로 아주 연하게 조절
+            
+            // ★ 배경보다 밝고 축 글자보단 어두운 푸른끼 색상으로 변경
+            const gridColor = 'rgba(40, 90, 130, 0.4)';
+            
             if (viewMode === 'daily') {
-              return context.index % 3 === 0 ? 'rgba(0,0,0,0.25)' : 'transparent';
+              return context.index % 3 === 0 ? gridColor : 'transparent';
             } else {
-              return context.index % 6 === 0 ? 'rgba(0,0,0,0.25)' : 'transparent';
+              // 3일간 모드에서는 12시간 간격(글자가 있는 곳)에만 선 긋기
+              return context.index % 12 === 0 ? gridColor : 'transparent';
             }
           },
           lineWidth: 1.5 
