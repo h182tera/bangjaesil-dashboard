@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>냉동기 모니터링 시스템 v4.5 (모바일 최적화 완결)</title>
+<title>냉동기 모니터링 시스템 v4.5 (3일간 모드 최적화)</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -250,10 +250,14 @@ function getChartOptions() {
           callback: function(val, index) {
             const label = this.getLabelForValue(val);
             if (viewMode === 'daily') {
+              // 일간 모드: 3시간 간격으로 그대로 표시
               return index % 3 === 0 ? label : '';
             } else {
-              // 3일간 모드일 때는 12시간 간격으로만 표시
-              return index % 12 === 0 ? label : ''; 
+              // ★ 3일간 모드: 자정(00:00)인 경우에만 00:00을 잘라내고 '날짜'만 깔끔하게 표시
+              if (label.includes('00:00')) {
+                return label.replace(' 00:00', ''); 
+              }
+              return '';
             }
           }
         }, 
@@ -261,20 +265,21 @@ function getChartOptions() {
           display: true, 
           drawTicks: false,
           color: function(context) {
+            let label = '';
             if (context.tick && context.tick.value !== undefined) {
-              const label = context.scale.getLabelForValue(context.tick.value);
-              // 00:00 일 경우 무조건 선 지우기 (이전 규칙 유지)
-              if (label && label.includes('00:00')) return 'transparent';
+              label = context.scale.getLabelForValue(context.tick.value);
             }
             
-            // ★ 배경보다 밝고 축 글자보단 어두운 푸른끼 색상으로 변경
+            // 푸른빛이 도는 세련된 구분선 색상
             const gridColor = 'rgba(40, 90, 130, 0.4)';
             
             if (viewMode === 'daily') {
+              // 일간 모드: 자정(00:00)은 선을 지우고, 3시간 간격으로 표시
+              if (label && label.includes('00:00')) return 'transparent';
               return context.index % 3 === 0 ? gridColor : 'transparent';
             } else {
-              // 3일간 모드에서는 12시간 간격(글자가 있는 곳)에만 선 긋기
-              return context.index % 12 === 0 ? gridColor : 'transparent';
+              // ★ 3일간 모드: 오직 날짜가 넘어가는 자정(00:00)에만 구분선 표시
+              return (label && label.includes('00:00')) ? gridColor : 'transparent';
             }
           },
           lineWidth: 1.5 
