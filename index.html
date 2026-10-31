@@ -9,30 +9,30 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:#050d1a; --bg2:#081426; --panel:#0a1c35; --panel2:#0d2244;
-    --border:#1a3a5c; --accent:#00c8ff; --accent2:#0088cc;
-    --text:#cce8ff; --text2:#7aadcc; --text3:#3a6a8a;
-    --glow:0 0 20px rgba(0,200,255,.3);
+    --bg:#0e0504; --bg2:#150807; --panel:#1b0a09; --panel2:#2a100d;
+    --border:#4d1f1a; --accent:#ff6a4a; --accent2:#c93a22;
+    --text:#ffe3dc; --text2:#d49c92; --text3:#855049;
+    --glow:0 0 20px rgba(255,106,74,.3);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;min-height:100vh;overflow-x:hidden;}
 
-  header{position:relative;z-index:10;background:linear-gradient(180deg,#020a14,var(--bg2));border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;}
+  header{position:relative;z-index:10;background:linear-gradient(180deg,#080202,var(--bg2));border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;}
   .hdr-l{display:flex;align-items:center;gap:16px;}
-  .logo{width:40px;height:40px;background:linear-gradient(135deg,#5c2a00,#cc6600);border:1px solid #ff9a3c;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,140,40,.3);}
-  .hdr-title{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:1px;text-shadow:var(--glow);}
-  #clock{font-weight:500;font-size:13px;color:var(--accent);background:rgba(0,200,255,.08);border:1px solid var(--border);border-radius:6px;padding:6px 14px;}
+  .logo{width:40px;height:40px;background:linear-gradient(135deg,#5c1408,#cc3a14);border:1px solid #ff6a4a;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(255,100,60,.3);}
+  .hdr-title{font-size:18px;font-weight:700;color:#ffa826;letter-spacing:1px;text-shadow:0 0 18px rgba(255,168,38,.4);}
+  #clock{font-weight:500;font-size:13px;color:var(--accent);background:rgba(255,106,74,.08);border:1px solid var(--border);border-radius:6px;padding:6px 14px;}
 
   .tab-nav{position:relative;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 24px;gap:4px;}
   .tab-btn{padding:12px 20px;font-size:13px;font-weight:500;color:var(--text3);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s;}
-  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(0,200,255,.5);}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 10px rgba(255,106,74,.5);}
 
   .main{position:relative;z-index:1;padding:20px 24px;max-width:1400px;margin:0 auto;}
 
   .upload-bar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
   .up-area{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-  .file-btn{padding:7px 16px;background:linear-gradient(135deg,#003a5c,#0066aa);border:1px solid var(--accent2);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
-  .file-btn:hover{background:linear-gradient(135deg,#004a6c,#0088cc);box-shadow:var(--glow);}
+  .file-btn{padding:7px 16px;background:linear-gradient(135deg,#5c1408,#b32e14);border:1px solid var(--accent2);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .file-btn:hover{background:linear-gradient(135deg,#721a0a,#d63a1c);box-shadow:var(--glow);}
   .file-btn:disabled{opacity:.35;cursor:default;box-shadow:none;}
 
   .mode-toggle{display:flex;background:var(--bg2);border-radius:20px;padding:2px;border:1px solid var(--border);}
@@ -57,13 +57,13 @@
 
   .tbl-ctrls{display:flex;gap:8px;flex-wrap:wrap;}
   .tbl-btn{padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text2);transition:all .15s;}
-  .tbl-btn.active{background:rgba(0,200,255,.15);border-color:var(--accent);color:var(--accent);}
+  .tbl-btn.active{background:rgba(255,106,74,.15);border-color:var(--accent);color:var(--accent);}
 
   .tbl-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow-x:auto;}
   table{width:100%;border-collapse:collapse;}
   thead th{background:var(--panel2);padding:8px 4px;font-size:11px;color:var(--text);border-bottom:1px solid var(--border);white-space:nowrap;}
-  tbody td{padding:6px 4px;text-align:center;font-size:12px;border-bottom:1px solid rgba(26,58,92,.5);}
-  tbody tr:hover{background:rgba(0,200,255,.05);}
+  tbody td{padding:6px 4px;text-align:center;font-size:12px;border-bottom:1px solid rgba(77,31,26,.5);}
+  tbody tr:hover{background:rgba(255,106,74,.05);}
 
   .tab-view{display:none;}
   .tab-view.active{display:block;}
@@ -94,7 +94,7 @@
     <div class="logo">🌡️</div>
     <div>
       <div class="hdr-title">열교환기 모니터링</div>
-      <div style="font-size:11px;color:var(--text2);">현대 테라타워 향동 방재실</div>
+      <div style="font-size:11px;color:var(--text);">현대 테라타워 향동 방재실</div>
     </div>
   </div>
   <div id="clock">--</div>
@@ -150,7 +150,7 @@ const TYPES = {
 };
 
 const C4      = ['#00e5ff','#39ff6b','#ffcc00','#ff5fa0'];
-const C4_DARK = ['#008291','#229940','#997a00','#993960'];
+const C4_DARK = ['#00a3b8','#2bb84e','#b8940a','#b8456f'];
 
 let allData = {}, curDate = null, sorted = [], charts = {};
 let currentType = 'jung';
@@ -300,12 +300,12 @@ function getChartOptions(unit = '°C'){
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { color: '#7aadcc' },
-        grid: { color: 'rgba(26,58,92,0.3)' }
+        ticks: { color: '#d49c92' },
+        grid: { color: 'rgba(77,31,26,0.3)' }
       },
       x: {
         ticks: {
-          color: '#7aadcc', autoSkip: false, maxRotation: 0,
+          color: '#d49c92', autoSkip: false, maxRotation: 0,
           callback: function(val, index){
             const label = this.getLabelForValue(val);
             if(viewMode === 'daily') return index % 3 === 0 ? label : '';
@@ -317,7 +317,7 @@ function getChartOptions(unit = '°C'){
           color: function(context){
             let label = '';
             if(context.tick && context.tick.value !== undefined) label = context.scale.getLabelForValue(context.tick.value);
-            const gridColor = 'rgba(40, 90, 130, 0.4)';
+            const gridColor = 'rgba(130, 55, 45, 0.4)';
             if(viewMode === 'daily'){
               if(label && label.includes('00:00')) return 'transparent';
               return context.index % 3 === 0 ? gridColor : 'transparent';
@@ -431,8 +431,8 @@ function renderTable(dev = currentTableDev){
   if(!allData[curDate]) return;
   const d = allData[curDate];
   const val = v => (v === null || v === undefined) ? '--' : v.toFixed(1);
-  const bd = 'border-right:1px solid rgba(26,58,92,0.8);';
-  const bd2 = 'border-right:1px solid rgba(26,58,92,0.5);';
+  const bd = 'border-right:1px solid rgba(77,31,26,0.8);';
+  const bd2 = 'border-right:1px solid rgba(77,31,26,0.5);';
   const COLS = [
     { t:'중온수',   c:'#ff7a4a', c2:'#a64d2e', f:['중온수공급','중온수환수'] },
     { t:'난방',     c:'#ffcc00', c2:'#997a00', f:['난방공급','난방환수'] },
@@ -450,7 +450,7 @@ function renderTable(dev = currentTableDev){
       <th rowspan="2" style="${bd}vertical-align:middle;">시간</th>
       ${COLS.map((g,i) => `<th colspan="2" style="color:${g.c};${i<COLS.length-1?bd:''}">${g.t}</th>`).join('')}
     </tr><tr>
-      ${COLS.map((g,i) => `<th style="color:${g.c};background:#0b1e38;font-size:10px;">공급</th><th style="color:${g.c2};background:#0b1e38;font-size:10px;${i<COLS.length-1?bd:''}">환수</th>`).join('')}
+      ${COLS.map((g,i) => `<th style="color:${g.c};background:#240d0a;font-size:10px;">공급</th><th style="color:${g.c2};background:#240d0a;font-size:10px;${i<COLS.length-1?bd:''}">환수</th>`).join('')}
     </tr></thead><tbody>`;
   d.hours.forEach((hr, i) => {
     const ch = d.chillers[dev];
