@@ -1,0 +1,15 @@
+{
+  "id": "heat-exchanger",
+  "name": "열교환기 모니터링",
+  "short_name": "열교환기",
+  "description": "현대 테라타워 향동 방재실 열교환기 모니터링",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0504",
+  "theme_color": "#0e0504",
+  "icons": [
+    { "src": "heat-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "heat-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
